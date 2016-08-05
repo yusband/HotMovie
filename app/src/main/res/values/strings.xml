@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">HotMovie</string>
+    <string name="sort_order">排列顺序</string>
+    <string-array name="sortBy">
+        <item>Popularity</item>
+        <item>Rate</item>
+    </string-array>
+    <string-array name="sortByWhat">
+        <item>popular</item>
+        <item>top_rated</item>
+    </string-array>
+</resources>
