@@ -6,6 +6,7 @@
         android:key="pref_sortOrder"
         android:title="@string/sort_order"
         android:entries="@array/sortBy"
+        android:defaultValue="@string/sortByWhat_popular"
         android:entryValues="@array/sortByWhat"
  />
 </PreferenceScreen>

@@ -13,6 +13,9 @@
     android:layout_height="200dp"
     android:scaleType="centerCrop"
     android:id="@+id/fragment_detail_poster"/>
+    <ScrollView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
 <LinearLayout
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -55,5 +58,5 @@
         android:layout_height="wrap_content"
         />
 </LinearLayout>
-
+    </ScrollView>
 </LinearLayout>

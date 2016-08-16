@@ -42,7 +42,8 @@ import java.util.List;
  * Created by Administrator on 2016/7/27.
  */
 public class ContentFragment extends Fragment {
-
+private boolean is_order_changed=false;
+        private String order_before;
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_fragmet_content,menu);
@@ -96,6 +97,8 @@ private GridView gridview;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        SharedPreferences preferences= PreferenceManager.getDefaultSharedPreferences(getActivity());
+        order_before=preferences.getString("pref_sortOrder","popular");
 //        new ParseDataTask().execute("popular");
     }
 
@@ -107,14 +110,25 @@ private GridView gridview;
     @Override
     public void onStart() {
         super.onStart();
-        //清空列表，以保证不会重复在gridview中加载图片
-        list.clear();
-//        gridview.setAdapter(null);
         SharedPreferences preferences= PreferenceManager.getDefaultSharedPreferences(getActivity());
         String sort_order=preferences.getString("pref_sortOrder","popular");
-        ParseDataTask parseDataTask=new ParseDataTask();
-        parseDataTask.execute(sort_order);
-
+        if(list.isEmpty()){
+            Log.i(TAG, "onStart: 1");
+            ParseDataTask parseDataTask = new ParseDataTask();
+            parseDataTask.execute(sort_order);
+        }
+        else if(sort_order.equals(order_before)){
+            Log.i(TAG, "onStart: 2");
+            //在应用进入后台之后，gridview不能正常显示图片
+            gridview.setAdapter(new ImageAdapter(getActivity()));
+        }
+        //清空列表，以保证不会重复在gridview中加载图片
+        else {
+            list.clear();
+            Log.i(TAG, "onStart: 3");
+            ParseDataTask parseDataTask = new ParseDataTask();
+            parseDataTask.execute(sort_order);
+        }
 
 
     }
@@ -184,7 +198,7 @@ private GridView gridview;
             if (params.length!=0){
 
             String sort_order=params[0];
-            final String ADDRESS = "http://api.themoviedb.org/3/movie/"+sort_order+"?api_key=YOUR_API_KEY";
+            final String ADDRESS = "http://api.themoviedb.org/3/movie/"+sort_order+"?api_key=YOUR_API_ID";
             HttpURLConnection connection = null;
             BufferedReader reader = null;
             String dataOutput = null;

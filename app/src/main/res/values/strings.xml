@@ -6,7 +6,9 @@
         <item>Rate</item>
     </string-array>
     <string-array name="sortByWhat">
-        <item>popular</item>
-        <item>top_rated</item>
+        <item>@string/sortByWhat_popular</item>
+        <item>@string/sortByWhat_rate</item>
     </string-array>
+    <string name="sortByWhat_popular">popular</string>
+    <string name="sortByWhat_rate">top_rated</string>
 </resources>

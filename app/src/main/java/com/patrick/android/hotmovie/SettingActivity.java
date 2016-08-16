@@ -7,7 +7,7 @@ import android.preference.PreferenceFragment;
 import android.support.v7.app.AppCompatActivity;
 
 public class SettingActivity extends AppCompatActivity  {
-private final String KEY="pref_syncConnectionType";
+private static final String KEY="pref_syncConnectionType";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,7 +23,7 @@ private final String KEY="pref_syncConnectionType";
 
 
 
-    private class SettingFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener{
+   public static class SettingFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener{
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
