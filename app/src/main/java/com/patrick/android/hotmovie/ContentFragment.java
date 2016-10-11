@@ -11,9 +11,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -27,6 +24,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.patrick.android.hotmovie.module.Movie;
 import com.squareup.picasso.Picasso;
 
 import java.io.BufferedReader;
@@ -44,21 +42,7 @@ import java.util.List;
 public class ContentFragment extends Fragment {
 private boolean is_order_changed=false;
         private String order_before;
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_fragmet_content,menu);
-    }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menu_fragment_content_item_settings:
-                startActivity(new Intent(getActivity(),SettingActivity.class));
-                    return  true;
-            default:
-            return super.onOptionsItemSelected(item);
-        }
-        }
 
     public static List<Movie> getList() {
         return list;
@@ -68,7 +52,7 @@ private GridView gridview;
 
 
     private static List<Movie> list = new ArrayList();
-    private final String TAG = getClass().getSimpleName();
+    private final   String TAG = getClass().getSimpleName();
 
     @Nullable
     @Override
@@ -85,6 +69,7 @@ private GridView gridview;
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent =new Intent(getActivity(),DetailActivity.class);
                 intent.putExtra("position",position);
+                intent.putExtra("identity",TAG);
                 Toast.makeText(getActivity(),"CLICKED",Toast.LENGTH_SHORT).show();
                 startActivity(intent);
             }
@@ -95,10 +80,12 @@ private GridView gridview;
     }
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
+    public void onCreate( Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
         SharedPreferences preferences= PreferenceManager.getDefaultSharedPreferences(getActivity());
         order_before=preferences.getString("pref_sortOrder","popular");
+
 //        new ParseDataTask().execute("popular");
     }
 
@@ -178,9 +165,7 @@ private GridView gridview;
                 String posterAddress=list.get(position).getPoster_Path();
 
                 Picasso.with(mContext).load("http://image.tmdb.org/t/p/w342/"+posterAddress).into(imageView);
-           int width= imageView.getMeasuredWidth();
-            int height=imageView.getMeasuredHeight();
-//            Toast.makeText(getActivity(),"width"+width+"height"+height,Toast.LENGTH_LONG).show();
+
                 return imageView;
 
         }
@@ -198,7 +183,7 @@ private GridView gridview;
             if (params.length!=0){
 
             String sort_order=params[0];
-            final String ADDRESS = "http://api.themoviedb.org/3/movie/"+sort_order+"?api_key=YOUR_API_ID";
+            final String ADDRESS = "http://api.themoviedb.org/3/movie/"+sort_order+"?api_key=6240369edd9386c3d88daa7510b4b921";
             HttpURLConnection connection = null;
             BufferedReader reader = null;
             String dataOutput = null;

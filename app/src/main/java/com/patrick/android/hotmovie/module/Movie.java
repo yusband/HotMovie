@@ -1,4 +1,4 @@
-package com.patrick.android.hotmovie;
+package com.patrick.android.hotmovie.module;
 
 /**
  * Created by Administrator on 2016/7/27.
@@ -6,6 +6,29 @@ package com.patrick.android.hotmovie;
 public class Movie {
     private String overview;
     private String title;
+    private String id;
+    private String release_date;
+    private String poster_path;
+    private String vote_average;
+    private String popularity;
+
+    public Boolean getCollected() {
+        return collected;
+    }
+
+    public void setCollected(Boolean collected) {
+        this.collected = collected;
+    }
+
+    private Boolean collected;
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
 
     public String getOverview() {
         return overview;
@@ -35,7 +58,7 @@ public class Movie {
         this.release_date = release_date;
     }
 
-    private String release_date;
+
 
     public void setPopularity(String popularity) {
         this.popularity = popularity;
@@ -57,8 +80,6 @@ public class Movie {
         this.title = title;
     }
 
-    private String poster_path;
-    private String vote_average;
-    private String popularity;
+
 
 }

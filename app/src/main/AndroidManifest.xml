@@ -17,8 +17,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".DetailActivity" />
-        <activity android:name=".SettingActivity"></activity>
+        <activity
+            android:name=".DetailActivity"
+            android:parentActivityName=".MainActivity" >
+
+
+        </activity>
+        <activity android:name=".SettingActivity"     android:parentActivityName=".MainActivity" >
+
+
+        </activity>
+         <provider
+             android:authorities="com.patrick.android.hotmovie"
+             android:name=".db.MovieProvider"/>
     </application>
 
 </manifest>
