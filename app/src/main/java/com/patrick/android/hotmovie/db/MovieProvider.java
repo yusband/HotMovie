@@ -14,18 +14,18 @@ import android.util.Log;
  */
 public class MovieProvider extends ContentProvider {
     private static final UriMatcher sUriMatcher = buildUriMatcher();
-    private static final int MOVIE =100 ;
-    private static final int MOVIE_ALL =200 ;
-    private static final int MOVIE_CERTAIN =300 ;
+    public static final int MOVIE =100 ;
+    public static final int MOVIE_ALL =300 ;
+    public static final int MOVIE_CERTAIN =400 ;
     private OpenHelper mOpenHelper;
-    static UriMatcher buildUriMatcher() {
+    public static UriMatcher buildUriMatcher() {
 
         UriMatcher matcher=new UriMatcher(UriMatcher.NO_MATCH);
-
         final String authority=MovieContact.CONTENT_AUTHORITY;
         matcher.addURI(authority,MovieContact.PATH_MOVIE, MOVIE);
+        matcher.addURI(authority,MovieContact.PATH_MOVIE+"/#",MOVIE_CERTAIN);
         matcher.addURI(authority,MovieContact.PATH_MOVIE+"/*",MOVIE_ALL);
-        matcher.addURI(authority,"movie/#",MOVIE_CERTAIN);
+
 
 
         // 3) Return the new matcher!
@@ -40,7 +40,19 @@ public class MovieProvider extends ContentProvider {
     @Nullable
     @Override
     public Cursor query(Uri uri, String[] strings, String s, String[] strings1, String s1) {
-        return null;
+        final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+        final int match = sUriMatcher.match(uri);
+        Cursor cursor=null;
+        switch (match) {
+            case MOVIE: {
+                cursor=db.query("movie",strings,s,strings1,null,null,s1);
+                 break;
+                }
+                default:
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+
+            }
+        return  cursor;
     }
 
     @Nullable
@@ -110,10 +122,10 @@ public class MovieProvider extends ContentProvider {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 break;
             }
-            case MOVIE_ALL: {
-
-                Log.i("movie_all","");
-            }
+//            case MOVIE_ALL: {
+//
+//                Log.i("movie_all","");
+//            }
             case  MOVIE:{
                 Log.i("movie","");
             }

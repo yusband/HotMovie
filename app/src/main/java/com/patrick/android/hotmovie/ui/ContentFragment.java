@@ -1,29 +1,32 @@
-package com.patrick.android.hotmovie;
+package com.patrick.android.hotmovie.ui;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.patrick.android.hotmovie.R;
 import com.patrick.android.hotmovie.module.Movie;
 import com.squareup.picasso.Picasso;
 
@@ -41,18 +44,72 @@ import java.util.List;
  */
 public class ContentFragment extends Fragment {
 private boolean is_order_changed=false;
-        private String order_before;
+private String order_before;
+    private  static  final  String API_KEY="";
+Activity mActivity;
+    public static final String TAG = "ContentFragment";
+    SharedPreferences sharedPref;
+    private static List<Movie> list = new ArrayList();
+    private static  final  String KEY="rate";
+    public static boolean LIST_LOAD_IS_DONE=false;
+    public interface OnItemClickedLandListener{
+        public void onItemClickedLand(int position);
+        public  void onLoadFinished();
+    };
+    OnItemClickedLandListener itemClickedLandListener;
 
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        try {
+            itemClickedLandListener = (OnItemClickedLandListener) getActivity();
+        } catch (ClassCastException e) {
+            throw new ClassCastException(getActivity().toString()
+                    + " must implement OnHeadlineSelectedListener");
+
+        }
+    }
 
     public static List<Movie> getList() {
         return list;
     }
-private GridView gridview;
+    private GridView gridview;
+    private int count=0;
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.menu_fragmet_content, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_fragment_content_item_rate:
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putString(KEY,"top_rated");
+                editor.apply();
+                Log.i("sp",sharedPref.getString("KEY","popular"));
+                onStart();
+                return true;
+            case R.id.menu_fragment_content_item_popularity:
+              editor = sharedPref.edit();
+                editor.putString(KEY,"popular");
+                editor.apply();
+                onStart();
+                return true;
+
+//            case R.id.menu_fragment_content_item_collect:
+            case R.id.menu_fragment_content_item_collect:
+                startActivity(new Intent(getActivity(), CollectActivity.class));
+                return true;
+
+            default:
+                return true;
+        }
+    }
 
 
-
-    private static List<Movie> list = new ArrayList();
-    private final   String TAG = getClass().getSimpleName();
 
     @Nullable
     @Override
@@ -67,11 +124,18 @@ private GridView gridview;
         gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent =new Intent(getActivity(),DetailActivity.class);
-                intent.putExtra("position",position);
-                intent.putExtra("identity",TAG);
-                Toast.makeText(getActivity(),"CLICKED",Toast.LENGTH_SHORT).show();
-                startActivity(intent);
+                Log.i("contentfragment","click");
+                ( (OnItemClickedLandListener)getActivity()).onItemClickedLand(position);
+//                Configuration configuration=getResources().getConfiguration();
+//                //判断是横屏还是竖屏，并进行布局参数的改动，但这里...并没有做出区别
+//                if(configuration.orientation==Configuration.ORIENTATION_PORTRAIT)
+//                {Intent intent = new Intent(getActivity(), DetailActivity.class);
+//                    intent.putExtra("position", position);
+//                    intent.putExtra("identity", TAG);
+//                    Toast.makeText(getActivity(), "CLICKED", Toast.LENGTH_SHORT).show();
+//                    startActivity(intent);}
+//                if(configuration.orientation==Configuration.ORIENTATION_LANDSCAPE){
+//                }
             }
         });
         return rootView;
@@ -83,28 +147,35 @@ private GridView gridview;
     public void onCreate( Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-        SharedPreferences preferences= PreferenceManager.getDefaultSharedPreferences(getActivity());
-        order_before=preferences.getString("pref_sortOrder","popular");
+        Context context = getActivity();
+         sharedPref = context.getSharedPreferences(
+                getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+//        SharedPreferences preferences= PreferenceManager.getDefaultSharedPreferences(getActivity());
+//        order_before=preferences.getString("pref_sortOrder","popular");
+//         Log.i(TAG, count+"vvvvvvvvvvvv");
 
-//        new ParseDataTask().execute("popular");
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        Log.i(TAG,"onDestroy");
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        SharedPreferences preferences= PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String sort_order=preferences.getString("pref_sortOrder","popular");
+        DetailFragment.list_comment.clear();
+//        SharedPreferences preferences= PreferenceManager.getDefaultSharedPreferences(getActivity());
+//        String sort_order=preferences.getString("pref_sortOrder","popular");
+        String sort_order=sharedPref.getString(KEY,"popular");
+        Log.i(TAG, "now"+sort_order);
         if(list.isEmpty()){
             Log.i(TAG, "onStart: 1");
             ParseDataTask parseDataTask = new ParseDataTask();
             parseDataTask.execute(sort_order);
         }
-        else if(sort_order.equals(order_before)){
+        else if((sort_order.equals(order_before))){
             Log.i(TAG, "onStart: 2");
             //在应用进入后台之后，gridview不能正常显示图片
             gridview.setAdapter(new ImageAdapter(getActivity()));
@@ -116,7 +187,7 @@ private GridView gridview;
             ParseDataTask parseDataTask = new ParseDataTask();
             parseDataTask.execute(sort_order);
         }
-
+         order_before=sort_order;
 
     }
     public class ImageAdapter extends BaseAdapter {
@@ -180,10 +251,11 @@ private GridView gridview;
 
         @Override
         protected List doInBackground(String... params) {
+            LIST_LOAD_IS_DONE=false;
             if (params.length!=0){
 
             String sort_order=params[0];
-            final String ADDRESS = "http://api.themoviedb.org/3/movie/"+sort_order+"?api_key=6240369edd9386c3d88daa7510b4b921";
+            final String ADDRESS = "http://api.themoviedb.org/3/movie/"+sort_order+"?api_key=+"+API_KEY;
             HttpURLConnection connection = null;
             BufferedReader reader = null;
             String dataOutput = null;
@@ -226,12 +298,6 @@ private GridView gridview;
 //                    String rates=object.get("vote_average").toString();
 
                 }
-
-
-               String size= String.valueOf(list.size());
-
-
-
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
@@ -251,8 +317,13 @@ private GridView gridview;
 
         @Override
         protected void onPostExecute(List<Movie> movies) {
+
             //尽量不要在fragment中设置“需要传入context类型的参数”的成员变量，容易引发空指针错误
             gridview.setAdapter(new ImageAdapter(getActivity()));
+            LIST_LOAD_IS_DONE=true;
+            itemClickedLandListener.onLoadFinished();
+            Log.i("contentfragment","list is ready");
+
         }
     }
 }

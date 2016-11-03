@@ -4,6 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
 android:id="@+id/activity_setting_container"
-    tools:context="com.patrick.android.hotmovie.SettingActivity">
+    tools:context="com.patrick.android.hotmovie.ui.SettingActivity">
 
 </FrameLayout>

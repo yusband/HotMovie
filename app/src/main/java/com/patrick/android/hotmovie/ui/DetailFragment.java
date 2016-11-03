@@ -1,4 +1,4 @@
-package com.patrick.android.hotmovie;
+package com.patrick.android.hotmovie.ui;
 
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -11,14 +11,15 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.patrick.android.hotmovie.R;
 import com.patrick.android.hotmovie.adapter.MyAdapter;
+import com.patrick.android.hotmovie.module.Movie;
 import com.patrick.android.hotmovie.module.MovieSub;
 import com.patrick.android.hotmovie.module.MovieTrailer;
 
@@ -35,45 +36,59 @@ import java.util.List;
  * Created by Administrator on 2016/8/16.
  */
 public class DetailFragment extends Fragment {
-    private int position;
-    private ListView listView;
+    private int position=0;
     private final String TAG = getClass().getSimpleName();
     private String address;
     private RecyclerView mRecyclerView;
     private MyAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
-
-    private static List<MovieSub> list_comment = new ArrayList<>();
+    private  int count=0;
+    public static List<MovieSub> list_comment = new ArrayList<>();
     public static List<MovieTrailer> list_trailer = new ArrayList<>();
-
+    public static List<Movie> list_movive=new ArrayList<>();
 
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i("detailfragment","oncreate");
+
+        }
+
+    public void onStart() {
+        super.onStart();
+        Log.i("detailfragment","onstart");
         Intent intent = getActivity().getIntent();
-        if ((intent.getStringExtra("identity") != null) && intent.getStringExtra("identity").equals("ContentFragment")) {
+        if ((intent.getStringExtra("identity") != null) && intent.getStringExtra("identity").equals("ContentFragment"))
+        {     Log.i("detailfragment","oncreate1");
+            list_movive=ContentFragment.getList();
             position = intent.getIntExtra("position", -1);
             //根据点击位置，在Detail中取出相应数值，取出ContentFragment中list<Movie>中对应位置的电影id
             String ID = ContentFragment.getList().get(position).getId();
-
             GetCommentTask getCommentTask = new GetCommentTask();
             getCommentTask.execute(ID);
             GetTrailerTask getTrailerTask = new GetTrailerTask();
             getTrailerTask.execute(ID);
-        }//这里用了个简陋的方法解决评论列表重复加载的问题，列表的清空放在这里，而影响不到执行需要一段时间的ASyncTask。
-        list_comment.clear();
+        }
+        if ((intent.getStringExtra("identity") != null) && intent.getStringExtra("identity").equals("CollectActivity")){
+            Log.i("detailfragment","oncreate2");
+            Log.i("detailfragment", String.valueOf(list_movive.size()));
+            Log.i("detailfragment",String.valueOf(list_comment.size()));
+            list_comment= CollectActivity.listsub;
+            list_movive=CollectActivity.list;
+            Log.i("detailfragment", String.valueOf(list_movive.size()));
+            Log.i("detailfragment",String.valueOf(list_comment.size()));
+            position=intent.getIntExtra("position",0);
+            MyAdapter myAdapter = new MyAdapter(getActivity(), list_movive, list_comment, position);
+            mRecyclerView.setAdapter(myAdapter);
+        }
+            //自定义的adapter会传入两个列表，分别是电影详细信息的对象列表和电影评论的对象列表；
+            //position是intent中储存的关于电影在gridview中的位置--对应电影在电影详细信息的对象列表中的位置
+
 
     }
 
-    public void onStart() {
-        super.onStart();
-        //自定义的adapter会传入两个列表，分别是电影详细信息的对象列表和电影评论的对象列表；
-        //position是intent中储存的关于电影在gridview中的位置--对应电影在电影详细信息的对象列表中的位置
-        MyAdapter myAdapter = new MyAdapter(getActivity(), ContentFragment.getList(), list_comment, position);
-        mRecyclerView.setAdapter(myAdapter);
-
-    }
 
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        Log.i("detailfragment","oncreatVIEW");
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.my_recycler_view);
         mLayoutManager = new LinearLayoutManager(getActivity());
@@ -145,7 +160,7 @@ public class DetailFragment extends Fragment {
         @Override
         protected void onPostExecute(List<MovieSub> content) {
             list_comment = content;
-            MyAdapter myAdapter = new MyAdapter(getActivity(), ContentFragment.getList(), content, position);
+            MyAdapter myAdapter = new MyAdapter(getActivity(), ContentFragment.getList(), list_comment, position);
             mRecyclerView.setAdapter(myAdapter);
         }
     }
@@ -209,5 +224,30 @@ public class DetailFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.i("detailfragment","ondestroy");
+       if(!DetailActivity.IS_FROM_COLLECT_ACTIVITY) list_comment.clear();
+        list_trailer.clear();
+    }
+    public void LoadContentsFromList(){
+        Log.i("detailfragment","loadfrom");
+        Bundle argument = getArguments();
+        if((argument==null))Log.i("detailfragment","bundle is null");
+        if (argument != null) {
+
+            position = argument.getInt("position", 0);
+
+            String id = ContentFragment.getList().get(position).getId();
+            Log.i("fragment", id);
+            Log.i("fragment", String.valueOf(list_movive.size()));
+            list_movive = ContentFragment.getList();
+            GetCommentTask getCommentTask = new GetCommentTask();
+            getCommentTask.execute(id);
+            GetTrailerTask getTrailerTask = new GetTrailerTask();
+            getTrailerTask.execute(id);}
+
+    }
 }
 

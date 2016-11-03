@@ -12,6 +12,16 @@ public class Movie {
     private String vote_average;
     private String popularity;
 
+    public String getLocal_path() {
+        return local_path;
+    }
+
+    public void setLocal_path(String local_path) {
+        this.local_path = local_path;
+    }
+
+    private String local_path;
+
     public Boolean getCollected() {
         return collected;
     }

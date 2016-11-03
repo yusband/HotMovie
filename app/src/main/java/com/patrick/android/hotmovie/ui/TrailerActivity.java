@@ -1,4 +1,4 @@
-package com.patrick.android.hotmovie;
+package com.patrick.android.hotmovie.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -6,8 +6,9 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
+import android.widget.Toast;
 
+import com.patrick.android.hotmovie.R;
 import com.patrick.android.hotmovie.adapter.TrailerAdapter;
 
 import java.util.List;
@@ -27,7 +28,11 @@ public class TrailerActivity extends AppCompatActivity {
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
         Intent intent=getIntent();
-        trailerList=intent.getStringArrayListExtra("address");
+//        trailerList=intent.getStringArrayListExtra("address");
+        if(DetailFragment.list_trailer.size()==0){
+            Toast.makeText(this,"暂且还没有预告片==",Toast.LENGTH_LONG).show();;
+//            this.onDestroy();
+        }
         TrailerAdapter adapter=new TrailerAdapter(this);
         mRecyclerView.setAdapter(adapter);
 
@@ -38,9 +43,7 @@ public class TrailerActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        trailerList.clear();
-        Log.i("size trailer", String.valueOf(TrailerActivity.trailerList.size()));
-        Log.i("Trailer is deatroyed","yes");
+
     }
 
 

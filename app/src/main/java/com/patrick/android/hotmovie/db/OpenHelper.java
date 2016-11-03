@@ -11,7 +11,7 @@ import com.patrick.android.hotmovie.db.MovieContact.MovieEntry;
  */
 public class OpenHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
     static final String DATABASE_NAME = "movie.db";
     public OpenHelper(Context context) {
@@ -25,7 +25,9 @@ public class OpenHelper extends SQLiteOpenHelper {
                 MovieEntry.COLUMN_OVERVIEW + " TEXT NOT NULL, " +
                 MovieEntry.COLUMN_RELEASE_DATE + " TEXT NOT NULL, " +
                 MovieEntry.COLUMN_TITLE + " TEXT NOT NULL, " +
-                MovieEntry.COLUMN_VOTE + " TEXT NOT NULL "+
+                MovieEntry.COLUMN_COMMENT + " TEXT NOT NULL, " +
+                MovieEntry.COLUMN_VOTE + " TEXT NOT NULL, "+
+                MovieEntry.COLUMN_PATH + " TEXT NOT NULL " +
                 " );";
         sqLiteDatabase.execSQL(SQL_CREATE_DETAIL_TABLE);
         Log.i("db ","is created");
