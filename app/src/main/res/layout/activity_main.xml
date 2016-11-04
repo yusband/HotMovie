@@ -3,7 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/container"
-    tools:context="com.patrick.android.hotmovie.MainActivity">
-
+    tools:context="com.patrick.android.hotmovie.ui.MainActivity">
+    <fragment android:name="com.patrick.android.hotmovie.ui.ContentFragment"
+        android:id="@+id/content_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 </FrameLayout>

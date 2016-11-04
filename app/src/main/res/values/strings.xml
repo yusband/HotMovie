@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">HotMovie</string>
     <string name="sort_order">排列顺序</string>
+    <string name="preference_file_key">sort_order</string>
     <string-array name="sortBy">
         <item>Popularity</item>
         <item>Rate</item>
