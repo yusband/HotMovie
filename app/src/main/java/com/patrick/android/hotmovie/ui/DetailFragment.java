@@ -238,16 +238,17 @@ public class DetailFragment extends Fragment {
         if (argument != null) {
 
             position = argument.getInt("position", 0);
+            if (ContentFragment.getList() != null) {
+                String id = ContentFragment.getList().get(position).getId();
+                Log.i("fragment", id);
+                Log.i("fragment", String.valueOf(list_movive.size()));
 
-            String id = ContentFragment.getList().get(position).getId();
-            Log.i("fragment", id);
-            Log.i("fragment", String.valueOf(list_movive.size()));
-            list_movive = ContentFragment.getList();
-            GetCommentTask getCommentTask = new GetCommentTask();
-            getCommentTask.execute(id);
-            GetTrailerTask getTrailerTask = new GetTrailerTask();
-            getTrailerTask.execute(id);}
-
+                GetCommentTask getCommentTask = new GetCommentTask();
+                getCommentTask.execute(id);
+                GetTrailerTask getTrailerTask = new GetTrailerTask();
+                getTrailerTask.execute(id);
+            }
+        }
     }
 }
 
