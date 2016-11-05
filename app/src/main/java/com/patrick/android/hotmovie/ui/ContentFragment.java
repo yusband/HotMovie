@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -61,6 +62,7 @@ Activity mActivity;
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+
         try {
             itemClickedLandListener = (OnItemClickedLandListener) getActivity();
         } catch (ClassCastException e) {
@@ -146,9 +148,13 @@ Activity mActivity;
     @Override
     public void onCreate( Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if(savedInstanceState!=null){
+            list=savedInstanceState.getParcelableArrayList("movie");
+            Log.i("contentfragment","parcelable is loaded");
+        }
         setHasOptionsMenu(true);
         Context context = getActivity();
-         sharedPref = context.getSharedPreferences(
+        sharedPref = context.getSharedPreferences(
                 getString(R.string.preference_file_key), Context.MODE_PRIVATE);
 //        SharedPreferences preferences= PreferenceManager.getDefaultSharedPreferences(getActivity());
 //        order_before=preferences.getString("pref_sortOrder","popular");
@@ -190,6 +196,13 @@ Activity mActivity;
          order_before=sort_order;
 
     }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList("movie", (ArrayList<? extends Parcelable>) list);
+    }
+
     public class ImageAdapter extends BaseAdapter {
         private final String TAG=getClass().getSimpleName();
         private Context mContext;
@@ -255,7 +268,7 @@ Activity mActivity;
             if (params.length!=0){
 
             String sort_order=params[0];
-            final String ADDRESS = "http://api.themoviedb.org/3/movie/"+sort_order+"?api_key=+"+API_KEY;
+            final String ADDRESS = "http://api.themoviedb.org/3/movie/"+sort_order+"?api_key="+API_KEY;
             HttpURLConnection connection = null;
             BufferedReader reader = null;
             String dataOutput = null;

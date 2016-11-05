@@ -8,6 +8,8 @@ import android.widget.Toast;
 
 import com.patrick.android.hotmovie.R;
 
+import java.io.IOException;
+
 public class MainActivity extends AppCompatActivity implements ContentFragment.OnItemClickedLandListener{
     private static  final  String KEY="sort_order";
 
@@ -20,9 +22,12 @@ private boolean mTwoPane;
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if(!isOnline()){
+            Toast.makeText(this,"no net connection",Toast.LENGTH_LONG).show();
+
+        }
         if ((findViewById(R.id.detail_container)!=null)) {
             Log.i("MainActivity","1");
-
             mTwoPane = true;
             if (savedInstanceState == null) {
                 Log.i("try", "..");
@@ -37,11 +42,7 @@ private boolean mTwoPane;
             Log.i("MainActivity","2");
 
             mTwoPane = false;
-//        Configuration configuration=getResources().getConfiguration();
-//        if(configuration.orientation== Configuration.ORIENTATION_LANDSCAPE) {
-//            }
-//        if(configuration.orientation== Configuration.ORIENTATION_PORTRAIT){
-//            }
+
         }
     }
 
@@ -50,7 +51,20 @@ private boolean mTwoPane;
         super.onDestroy();
         Log.i("MainActivity","destroyed");
     }
+    public boolean isOnline() {
 
+        Runtime runtime = Runtime.getRuntime();
+        try {
+
+            Process ipProcess = runtime.exec("/system/bin/ping -c 1 8.8.8.8");
+            int     exitValue = ipProcess.waitFor();
+            return (exitValue == 0);
+
+        } catch (IOException e)          { e.printStackTrace(); }
+        catch (InterruptedException e) { e.printStackTrace(); }
+
+        return false;
+    }
     @Override
     public void onItemClickedLand(int position) {
     this.postion_land=position;
@@ -78,8 +92,6 @@ private boolean mTwoPane;
         DetailFragment detailFragment=(DetailFragment)getSupportFragmentManager().findFragmentByTag(DETAIL_FRAGMENT_TAG);
         if(detailFragment!=null)detailFragment.LoadContentsFromList();
     }
-//        Fragment fragment=getAcgetSupportFragmentManager().findFragmentById(R.id.detail_fragment);
-//        fragment.
 
     }
 

@@ -1,9 +1,12 @@
 package com.patrick.android.hotmovie.module;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 /**
  * Created by Administrator on 2016/7/27.
  */
-public class Movie {
+public class Movie implements Parcelable{
     private String overview;
     private String title;
     private String id;
@@ -11,6 +14,7 @@ public class Movie {
     private String poster_path;
     private String vote_average;
     private String popularity;
+    public  Movie(){}
 
     public String getLocal_path() {
         return local_path;
@@ -91,5 +95,36 @@ public class Movie {
     }
 
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+private Movie (Parcel parcel){
+    id=parcel.readString();
+    overview=parcel.readString();
+    title=parcel.readString();
+    poster_path=parcel.readString();
+    vote_average=parcel.readString();
+    release_date=parcel.readString();
+}
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+         dest.writeString(id);
+        dest.writeString(overview);
+        dest.writeString(title);
+        dest.writeString(poster_path);
+        dest.writeString(vote_average);
+        dest.writeString(release_date);
+    }
+    public static final Parcelable.Creator<Movie> CREATOR= new Creator<Movie>() {
+        @Override
+        public Movie createFromParcel(Parcel source) {
+            return new Movie(source);
+        }
 
+        @Override
+        public Movie[] newArray(int size) {
+            return new Movie[size];
+        }
+    };
 }

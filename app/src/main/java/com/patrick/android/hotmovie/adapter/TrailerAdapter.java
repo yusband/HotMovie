@@ -13,7 +13,6 @@ import android.widget.TextView;
 
 import com.patrick.android.hotmovie.R;
 import com.patrick.android.hotmovie.ui.DetailFragment;
-import com.patrick.android.hotmovie.ui.TrailerActivity;
 
 /**
  * Created by Administrator on 2016/9/1.
@@ -53,7 +52,7 @@ public  class TrailerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    mContext.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?"+TrailerActivity.trailerList.get(getLayoutPosition()))));
+                    mContext.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?"+DetailFragment.list_trailer.get(getLayoutPosition()))));
                 }
             });
 
