@@ -238,7 +238,7 @@ public class DetailFragment extends Fragment {
         if (argument != null) {
 
             position = argument.getInt("position", 0);
-            if (ContentFragment.getList() != null) {
+            if (!ContentFragment.getList().isEmpty()){
                 String id = ContentFragment.getList().get(position).getId();
                 Log.i("fragment", id);
                 Log.i("fragment", String.valueOf(list_movive.size()));
