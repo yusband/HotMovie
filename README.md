@@ -2,17 +2,11 @@
 
 
 
-Udacity Nanodegree Android Developer Project-phase-1
+Udacity Nanodegree Android Developer Project-phase-3
 
 Project Name：HotMovies
-* 项目描述：作为应用的第一阶段，实现应用的基本功能和ui界面。将实现如下功能：
-* 应用打开后， 能够以网格排列展示电影海报。
-* 使用户能够通过设置更改海报排列顺序： 
-* 排列顺序依据包括热门程度或评分高低。
-* 使用户能够点按海报转到详情页面， 了解电影的更多信息， 例如： 电影名称电影海报、剧情简介 (在 API 中叫做 overview) 、用户评分 (在 API 中叫做 vote_average)、 发布日期
 
-
-ps：
-* 计划使用picasso加载图片
-* 数据来源：themoviedb.org API
-
+####updated on 11.29:
+- 将网络访问放到了FetchDataService中，在app启动时判断如果数据库为空则启动服务。
+- 在FetchDtaService的onHandleIntent方法中，基于第一次网络访问的结果（从中取得id，放进一个列表），进行后续的网络访问和数据写入（遍历列表）。
+ 
