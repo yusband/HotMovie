@@ -23,7 +23,6 @@ import com.patrick.android.hotmovie.module.Movie;
 import com.patrick.android.hotmovie.module.MovieSub;
 import com.patrick.android.hotmovie.ui.ContentFragment;
 import com.patrick.android.hotmovie.ui.DetailActivity;
-import com.patrick.android.hotmovie.ui.DetailFragment;
 import com.patrick.android.hotmovie.ui.TrailerActivity;
 import com.squareup.picasso.Picasso;
 
@@ -76,7 +75,7 @@ public class MyAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof DetailViewHolder) {
-            Cursor cursor= context.getContentResolver().query(MovieContact.MovieEntry.CONTENT_URI, new String[]{"title"},"title=?",new String[]{list.get(positon_of_movie).getTitle()},null);
+            Cursor cursor= context.getContentResolver().query(MovieContact.PopularMovieEntry.CONTENT_URI, new String[]{"title"},"title=?",new String[]{list.get(positon_of_movie).getTitle()},null);
             if(cursor.moveToNext()){
             if(cursor.getString(cursor.getColumnIndex("title"))!=null) {
                 collected=true;
@@ -148,7 +147,7 @@ public class MyAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 @Override
                 public void onClick(View view) {
 
-                    Uri uri= MovieContact.MovieEntry.CONTENT_URI;
+                    Uri uri= MovieContact.PopularMovieEntry.CONTENT_URI;
                     if(!collected){
                         BitmapDrawable drawable = (BitmapDrawable) imageView.getDrawable();
                         Bitmap bitmap = drawable.getBitmap();
@@ -183,7 +182,7 @@ public class MyAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                         contentValues.put("rate",ContentFragment.getList().get(positon_of_movie).getVote_average());
                         contentValues.put("date",ContentFragment.getList().get(positon_of_movie).getRelease_date());
                         contentValues.put("path",EXTERNAL_PATH+ ContentFragment.getList().get(positon_of_movie).getTitle()+".png");
-                        contentValues.put("comment",convertArrayToString(convertListToArray(DetailFragment.list_comment)));
+//                        contentValues.put("comment",convertArrayToString(convertListToArray(DetailFragment.list_comment)));
                         id= Long.parseLong(context.getContentResolver().insert(uri,contentValues).getPathSegments().get(1));
                         Log.i("current id ", String.valueOf(id));
                         collected=true;
@@ -191,7 +190,7 @@ public class MyAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                         textView_collected.setText("已收藏");
                     }
                     else{
-                        context.getContentResolver().delete(MovieContact.MovieEntry.buildMovieUri(id),"title=?",new String[]{ContentFragment.getList().get(positon_of_movie).getTitle()});
+                        context.getContentResolver().delete(MovieContact.PopularMovieEntry.buildMovieUri(id),"title=?",new String[]{ContentFragment.getList().get(positon_of_movie).getTitle()});
                         collected=false;
                         imageView_star.setImageResource(R.drawable.ic_star_white_24dp);
                         textView_collected.setText("点击收藏");

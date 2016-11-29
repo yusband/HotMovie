@@ -6,7 +6,6 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.widget.Toast;
 
 import com.patrick.android.hotmovie.R;
 import com.patrick.android.hotmovie.adapter.TrailerAdapter;
@@ -29,10 +28,7 @@ public class TrailerActivity extends AppCompatActivity {
         mRecyclerView.setLayoutManager(mLayoutManager);
         Intent intent=getIntent();
 //        trailerList=intent.getStringArrayListExtra("address");
-        if(DetailFragment.list_trailer.size()==0){
-            Toast.makeText(this,"暂且还没有预告片==",Toast.LENGTH_LONG).show();;
-//            this.onDestroy();
-        }
+
         TrailerAdapter adapter=new TrailerAdapter(this);
         mRecyclerView.setAdapter(adapter);
 

@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
-<ImageView
-    android:layout_width="60dp"
-    android:layout_height="100dp"
-    android:id="@+id/collect_recycler_view_image"/>
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="120dp"
+    android:background="#d9d7d6"
+    android:id="@+id/test_cursor_view">
+    <ImageView
+        android:layout_width="60dp"
+        android:layout_height="100dp"
+        android:id="@+id/test_cursor_view_poster"/>
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
@@ -14,11 +15,10 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/collect_recycler_view_text_title"/>
+            android:id="@+id/test_cursor_view_title"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/collect_recycler_view_text_date"/>
+            android:id="@+id/test_cursor_view_date"/>
     </LinearLayout>
-
 </LinearLayout>

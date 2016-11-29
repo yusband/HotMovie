@@ -1,15 +1,19 @@
 package com.patrick.android.hotmovie.ui;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
-import android.os.AsyncTask;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -17,47 +21,119 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.BaseAdapter;
-import android.widget.GridView;
-import android.widget.ImageView;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.patrick.android.hotmovie.R;
+import com.patrick.android.hotmovie.adapter.CursorRecyclerViewAdapter;
+import com.patrick.android.hotmovie.adapter.TrueCursorRecyclerViewAdapter;
+import com.patrick.android.hotmovie.db.MovieContact;
 import com.patrick.android.hotmovie.module.Movie;
-import com.squareup.picasso.Picasso;
+import com.patrick.android.hotmovie.net.FetchDataService;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by Administrator on 2016/7/27.
  */
-public class ContentFragment extends Fragment {
-private boolean is_order_changed=false;
-private String order_before;
-    private  static  final  String API_KEY="";
-Activity mActivity;
+public class ContentFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,SharedPreferences.OnSharedPreferenceChangeListener {
+    private RecyclerView mRecyclerView;
+    private RecyclerView.LayoutManager mLayoutManager;
+    private static Boolean IS_EMPTY=null;
+    private Cursor cursor_popular=null;
+    private Cursor cursor_top=null;
+    String sort_order;
+    private String order_before;
+    private static final int TOP_MOVIE_LOADER = 1;
+    private static final int POPULAR_MOVIE_LOADER = 0;
+    public static final String SP_TOP_MOVIE="top_rated";
+    public static final String SP_POPULAR_MOVIE="popular";
+    public static final String SP_FAVOR_MOVIE="favor";
+    private CursorRecyclerViewAdapter cursorRecyclerViewAdapter;
     public static final String TAG = "ContentFragment";
     SharedPreferences sharedPref;
     private static List<Movie> list = new ArrayList();
-    private static  final  String KEY="rate";
-    public static boolean LIST_LOAD_IS_DONE=false;
-    public interface OnItemClickedLandListener{
-        public void onItemClickedLand(int position);
-        public  void onLoadFinished();
+    private static final String KEY = "rate";
+    public static boolean LIST_LOAD_IS_DONE = false;
+    private static final String[] POPULAR_MOVIE_COLUMNS = {
+                    MovieContact.PopularMovieEntry.TABLE_NAME + "." + MovieContact.PopularMovieEntry._ID,
+                    MovieContact.PopularMovieEntry.COLUMN_TITLE,
+                    MovieContact.PopularMovieEntry.COLUMN_RELEASE_DATE,
+                    MovieContact.PopularMovieEntry.COLUMN_VOTE,
+                    MovieContact.PopularMovieEntry.COLUMN_NUMBER,
+                    MovieContact.PopularMovieEntry.COLUMN_OVERVIEW,
+                    MovieContact.PopularMovieEntry.COLUMN_PATH,
+
+
+                    };
+    private static final String[] TOP_MOVIE_COLUMNS = {
+            MovieContact.TopMovieEntry.TABLE_NAME + "." + MovieContact.TopMovieEntry._ID,
+            MovieContact.TopMovieEntry.COLUMN_TITLE,
+            MovieContact.TopMovieEntry.COLUMN_RELEASE_DATE,
+            MovieContact.TopMovieEntry.COLUMN_VOTE,
+            MovieContact.TopMovieEntry.COLUMN_NUMBER,
+            MovieContact.TopMovieEntry.COLUMN_OVERVIEW,
+            MovieContact.TopMovieEntry.COLUMN_PATH,
+
+
+
     };
+
+
+    static final int COL_MOVIE_ID = 0;
+    static final int COL_TITLE = 1;
+    static final int COL_RELEASE_DATE= 2;
+    static final int COL_VOTE = 3;
+    static final int COL_NUMBER = 4;
+    static final int COL_OVERVIEW= 5;
+    static final int COL_PATH = 6;
+
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+
+        String order =sharedPreferences.getString(KEY,"top_rated");
+        switch (order){
+            case SP_TOP_MOVIE:{
+                Log.i("contentframent","0" );
+               if(cursor_top!=null)cursorRecyclerViewAdapter.swapCursor(cursor_top);
+                TrueCursorRecyclerViewAdapter trueCursorRecyclerViewAdapter=new TrueCursorRecyclerViewAdapter(cursorRecyclerViewAdapter,getActivity(),TrueCursorRecyclerViewAdapter.FRAGMENT_COTENT);
+                mRecyclerView.setAdapter(trueCursorRecyclerViewAdapter);
+            break;}
+            case SP_POPULAR_MOVIE:{
+                Log.i("contentframent","1" );
+                if(cursor_popular!=null)cursorRecyclerViewAdapter.swapCursor(cursor_popular);
+                TrueCursorRecyclerViewAdapter trueCursorRecyclerViewAdapter=new TrueCursorRecyclerViewAdapter(cursorRecyclerViewAdapter,getActivity(),TrueCursorRecyclerViewAdapter.FRAGMENT_COTENT);
+                mRecyclerView.setAdapter(trueCursorRecyclerViewAdapter);
+                break;
+            }
+            case SP_FAVOR_MOVIE:{
+
+                Log.i("contentframent","2" );
+                break;
+            }
+        }
+
+    }
+
+    public interface OnItemClickedLandListener {
+        public void onItemClickedLand(int position);
+
+        public void onLoadFinished();
+    }
+
+    ;
     OnItemClickedLandListener itemClickedLandListener;
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        LoaderManager loaderManager=getLoaderManager();
+        loaderManager.initLoader(POPULAR_MOVIE_LOADER,null,this);
+        loaderManager.initLoader(TOP_MOVIE_LOADER,null,this);
+
+        super.onActivityCreated(savedInstanceState);
+
+
+    }
 
     @Override
     public void onAttach(Context context) {
@@ -71,12 +147,64 @@ Activity mActivity;
 
         }
     }
+    @Override
+    public Loader onCreateLoader(int id, Bundle args) {
 
+        switch (id) {
+
+            case POPULAR_MOVIE_LOADER:
+                Log.v("LOG_TAG", "In onCreatepopularLoader");
+                return new CursorLoader(
+                        getActivity(), MovieContact.PopularMovieEntry.CONTENT_URI,
+                        POPULAR_MOVIE_COLUMNS,
+                        null,
+                        null,
+                        null);
+
+            case TOP_MOVIE_LOADER:
+                Log.v("LOG_TAG", "In onCreatetopLoader");
+                return new CursorLoader(
+                        getActivity(), MovieContact.TopMovieEntry.CONTENT_URI,
+                        TOP_MOVIE_COLUMNS,
+                        null,
+                        null,
+                        null);
+
+
+        }
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+
+        if(loader.getId()==TOP_MOVIE_LOADER) {
+            cursor_top = data;
+            if (TextUtils.equals(sharedPref.getString(KEY, ""), SP_TOP_MOVIE)) {
+                cursorRecyclerViewAdapter.swapCursor(data);
+                Log.i("in contentfragment", "loader id is " + String.valueOf(loader.getId()));
+            }
+        }
+        if(loader.getId()==POPULAR_MOVIE_LOADER){
+            cursor_popular=data;
+            if(TextUtils.equals(sharedPref.getString(KEY,""),SP_POPULAR_MOVIE))
+            cursorRecyclerViewAdapter.swapCursor(data);
+
+            Log.i("in contentfragment", "loader id is "+String.valueOf(loader.getId()));
+        }
+        }
+
+
+
+
+    @Override
+    public void onLoaderReset(Loader loader) {
+cursorRecyclerViewAdapter.swapCursor(null);
+    }
     public static List<Movie> getList() {
         return list;
     }
-    private GridView gridview;
-    private int count=0;
+
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -89,21 +217,23 @@ Activity mActivity;
         switch (item.getItemId()) {
             case R.id.menu_fragment_content_item_rate:
                 SharedPreferences.Editor editor = sharedPref.edit();
-                editor.putString(KEY,"top_rated");
+                editor.putString(KEY, SP_TOP_MOVIE);
                 editor.apply();
-                Log.i("sp",sharedPref.getString("KEY","popular"));
-                onStart();
+                Log.i("sp", sharedPref.getString("KEY", "11"));
                 return true;
             case R.id.menu_fragment_content_item_popularity:
-              editor = sharedPref.edit();
-                editor.putString(KEY,"popular");
+                editor = sharedPref.edit();
+                editor.putString(KEY, SP_POPULAR_MOVIE);
                 editor.apply();
-                onStart();
+                Log.i("sp", sharedPref.getString("KEY", "12"));
                 return true;
 
 //            case R.id.menu_fragment_content_item_collect:
             case R.id.menu_fragment_content_item_collect:
-                startActivity(new Intent(getActivity(), CollectActivity.class));
+                editor = sharedPref.edit();
+                editor.putString(KEY, "favor");
+                editor.apply();
+                Log.i("sp", sharedPref.getString("KEY", SP_FAVOR_MOVIE));
                 return true;
 
             default:
@@ -112,88 +242,73 @@ Activity mActivity;
     }
 
 
-
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_content, container, false);
+        cursorRecyclerViewAdapter=new CursorRecyclerViewAdapter(getActivity(),null,0);
+        TrueCursorRecyclerViewAdapter trueCursorRecyclerViewAdapter=new TrueCursorRecyclerViewAdapter(cursorRecyclerViewAdapter,getActivity(),TrueCursorRecyclerViewAdapter.FRAGMENT_COTENT);
+        View rootView = inflater.inflate(R.layout.test_recyclerview, container, false);
+        mRecyclerView = (RecyclerView) rootView.findViewById(R.id.test_recycler_view);
+        mLayoutManager = new LinearLayoutManager(getActivity());
+        mRecyclerView.setLayoutManager(mLayoutManager);
+        mRecyclerView.setAdapter(trueCursorRecyclerViewAdapter);
+
         setHasOptionsMenu(true);
-        /*初始化gridview并加上响应事件，捕获点击的位置放入intent，
-        启动DetailActivity
-         */
-        gridview = (GridView) rootView.findViewById(R.id.gridview);
-//        gridview.setAdapter(imageAdapter);
-        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.i("contentfragment","click");
-                ( (OnItemClickedLandListener)getActivity()).onItemClickedLand(position);
-//                Configuration configuration=getResources().getConfiguration();
-//                //判断是横屏还是竖屏，并进行布局参数的改动，但这里...并没有做出区别
-//                if(configuration.orientation==Configuration.ORIENTATION_PORTRAIT)
-//                {Intent intent = new Intent(getActivity(), DetailActivity.class);
-//                    intent.putExtra("position", position);
-//                    intent.putExtra("identity", TAG);
-//                    Toast.makeText(getActivity(), "CLICKED", Toast.LENGTH_SHORT).show();
-//                    startActivity(intent);}
-//                if(configuration.orientation==Configuration.ORIENTATION_LANDSCAPE){
-//                }
-            }
-        });
+
         return rootView;
 
 
     }
 
     @Override
-    public void onCreate( Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(savedInstanceState!=null){
-            list=savedInstanceState.getParcelableArrayList("movie");
-            Log.i("contentfragment","parcelable is loaded");
+        if (savedInstanceState != null) {
+            list = savedInstanceState.getParcelableArrayList("movie");
+            Log.i("contentfragment", "parcelable is loaded");
         }
+        Cursor cursor=getActivity().getContentResolver().query(MovieContact.PopularMovieEntry.CONTENT_URI,new String[]{"title"},null,null,null);
+        if((cursor!=null)&&cursor.getCount()==0){
+        Intent intent=new Intent(getActivity(), FetchDataService.class);
+        getActivity().startService(intent);
+            Log.i("contentfragment","service is started");
+        }
+           cursor.close();
         setHasOptionsMenu(true);
         Context context = getActivity();
         sharedPref = context.getSharedPreferences(
                 getString(R.string.preference_file_key), Context.MODE_PRIVATE);
-//        SharedPreferences preferences= PreferenceManager.getDefaultSharedPreferences(getActivity());
-//        order_before=preferences.getString("pref_sortOrder","popular");
-//         Log.i(TAG, count+"vvvvvvvvvvvv");
-
+        sharedPref.registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.i(TAG,"onDestroy");
+        Log.i(TAG, "onDestroy");
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        DetailFragment.list_comment.clear();
-//        SharedPreferences preferences= PreferenceManager.getDefaultSharedPreferences(getActivity());
-//        String sort_order=preferences.getString("pref_sortOrder","popular");
-        String sort_order=sharedPref.getString(KEY,"popular");
-        Log.i(TAG, "now"+sort_order);
-        if(list.isEmpty()){
+
+
+        sort_order = sharedPref.getString(KEY, "popular");
+        Log.i(TAG, "now" + sort_order);
+        if (list.isEmpty()) {
             Log.i(TAG, "onStart: 1");
-            ParseDataTask parseDataTask = new ParseDataTask();
-            parseDataTask.execute(sort_order);
-        }
-        else if((sort_order.equals(order_before))){
+
+        } else if ((sort_order.equals(order_before))) {
             Log.i(TAG, "onStart: 2");
-            //在应用进入后台之后，gridview不能正常显示图片
-            gridview.setAdapter(new ImageAdapter(getActivity()));
+
+
         }
-        //清空列表，以保证不会重复在gridview中加载图片
+
         else {
             list.clear();
             Log.i(TAG, "onStart: 3");
-            ParseDataTask parseDataTask = new ParseDataTask();
-            parseDataTask.execute(sort_order);
+
         }
-         order_before=sort_order;
+        order_before = sort_order;
 
     }
 
@@ -203,140 +318,18 @@ Activity mActivity;
         outState.putParcelableArrayList("movie", (ArrayList<? extends Parcelable>) list);
     }
 
-    public class ImageAdapter extends BaseAdapter {
-        private final String TAG=getClass().getSimpleName();
-        private Context mContext;
-        public ImageAdapter(Context c) {
-            mContext = c;
-        }
-
-
+public void isEmpty(){
+    Thread thread= new Thread(new Runnable() {
         @Override
-        public int getCount() {
-            return list.size();
-
+        public void run() {
+            Cursor cursor=getActivity().getContentResolver().query(MovieContact.PopularMovieEntry.CONTENT_URI,new String[]{"title"},null,null,null);
+            if ((cursor!=null)&&cursor.getCount()>0)IS_EMPTY=false;
+            else IS_EMPTY=true;
         }
-
-        public Object getItem(int position) {
-            return position;
-        }
-
-        public long getItemId(int position) {
-            return 0;
-        }
-
-        // create a new ImageView for each item referenced by the Adapter
-        public View getView(int position, View convertView, ViewGroup parent) {
-
-            ImageView imageView;
-            if (convertView == null) {
-                // if it's not recycled, initialize some attributes
-                imageView = new ImageView(mContext);
-                Configuration configuration=getResources().getConfiguration();
-                //判断是横屏还是竖屏，并进行布局参数的改动，但这里...并没有做出区别
-                if(configuration.orientation==Configuration.ORIENTATION_PORTRAIT){
-                    imageView.setLayoutParams(new GridView.LayoutParams(GridView.AUTO_FIT, 800));
-                }
-                if(configuration.orientation==Configuration.ORIENTATION_LANDSCAPE){
-                    imageView.setLayoutParams(new GridView.LayoutParams(GridView.AUTO_FIT, 800));
-                }
-                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                imageView.setPadding(0, 0, 0, 0);
-
-            } else {
-                imageView = (ImageView) convertView;
-            }
-                String posterAddress=list.get(position).getPoster_Path();
-
-                Picasso.with(mContext).load("http://image.tmdb.org/t/p/w342/"+posterAddress).into(imageView);
-
-                return imageView;
-
-        }
-
-
-
-
+    }) ;thread.start();
     }
 
 
-    public class ParseDataTask extends AsyncTask<String, Void, List<Movie>> {
-
-        @Override
-        protected List doInBackground(String... params) {
-            LIST_LOAD_IS_DONE=false;
-            if (params.length!=0){
-
-            String sort_order=params[0];
-            final String ADDRESS = "http://api.themoviedb.org/3/movie/"+sort_order+"?api_key="+API_KEY;
-            HttpURLConnection connection = null;
-            BufferedReader reader = null;
-            String dataOutput = null;
-//            Uri.Builder builder=Uri.Builder.
-            try {
-                URL url = new URL(ADDRESS);
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.connect();
-                InputStream inputStream = connection.getInputStream();
-                StringBuffer stringBuffer = new StringBuffer();
-                if (inputStream == null) {
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    stringBuffer.append(line + "\n");
-                }
-                if (stringBuffer.length() == 0) {
-                }
-                dataOutput = stringBuffer.toString();
-
-                Log.i(TAG, dataOutput);
-                JsonParser jsonParser = new JsonParser();
-                JsonElement jelement = jsonParser.parse(dataOutput);
-                JsonObject object = jelement.getAsJsonObject();
-//                object = object.getAsJsonObject("results");
-                JsonArray array = object.getAsJsonArray("results");
-
-                for (int j = 0; j < array.size(); j++) {
-                    Gson gson = new Gson();
-//                    List<Movie> moviesList=gson.fromJson(array.get(j).getAsJsonObject(), new TypeToken<List<Movie>>(){}.getType());
-                    Movie movie = gson.fromJson(array.get(j).getAsJsonObject(), Movie.class);
-                    list.add(movie);
-//                    object=array.get(j).getAsJsonObject();
-//                    String overview=object.get("overview").toString();
-//                    String title=object.get("original_title").toString();
-//                    String path=object.get("poster_path").toString();
-//                    String pupolarity=object.get("popularity").toString();
-//                    String rates=object.get("vote_average").toString();
-
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
-                }
-
-            }}
-            if (list != null) {
-                return list;
-            } else {
-                Log.i(TAG, "list is null");
-                return null;
-
-            }
-        }
-
-        @Override
-        protected void onPostExecute(List<Movie> movies) {
-
-            //尽量不要在fragment中设置“需要传入context类型的参数”的成员变量，容易引发空指针错误
-            gridview.setAdapter(new ImageAdapter(getActivity()));
-            LIST_LOAD_IS_DONE=true;
-            itemClickedLandListener.onLoadFinished();
-            Log.i("contentfragment","list is ready");
-
-        }
-    }
 }
+
+

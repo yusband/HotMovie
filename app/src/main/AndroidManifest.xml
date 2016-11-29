@@ -31,7 +31,9 @@
             android:authorities="com.patrick.android.hotmovie" />
 
         <activity android:name=".ui.CollectActivity" />
-        <activity android:name=".ui.LocalDetailActivity"></activity>
+        <activity android:name=".ui.LocalDetailActivity" />
+        <activity android:name=".ui.TestActivity"></activity>
+        <service android:name=".net.FetchDataService"/>
     </application>
 
 </manifest>

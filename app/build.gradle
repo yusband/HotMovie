@@ -17,6 +17,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    buildTypes.each {it.buildConfigField 'String', 'MY_API_KEY', '"6240369edd9386c3d88daa7510b4b921"'}
     sourceSets { main { java.srcDirs = ['src/main/java', 'src/main/java/2'] } }
 }
 
@@ -30,5 +31,5 @@ dependencies {
     compile 'com.jakewharton:butterknife:8.4.0'
     compile 'com.android.support:cardview-v7:21.0.+'
     compile 'com.clough.android.androiddbviewer:androiddbviewer:1.0.0'
-
+    compile 'com.squareup.okhttp3:okhttp:3.4.2'
 }

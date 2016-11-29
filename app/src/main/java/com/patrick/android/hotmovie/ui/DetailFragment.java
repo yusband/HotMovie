@@ -1,236 +1,156 @@
 package com.patrick.android.hotmovie.ui;
 
 import android.content.Intent;
-import android.os.AsyncTask;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.patrick.android.hotmovie.R;
+import com.patrick.android.hotmovie.adapter.CursorRecyclerViewAdapter;
 import com.patrick.android.hotmovie.adapter.MyAdapter;
-import com.patrick.android.hotmovie.module.Movie;
-import com.patrick.android.hotmovie.module.MovieSub;
-import com.patrick.android.hotmovie.module.MovieTrailer;
+import com.patrick.android.hotmovie.adapter.TrueCursorRecyclerViewAdapter;
+import com.patrick.android.hotmovie.db.MovieContact;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+import static com.patrick.android.hotmovie.ui.ContentFragment.SP_POPULAR_MOVIE;
+import static com.patrick.android.hotmovie.ui.ContentFragment.SP_TOP_MOVIE;
 
 /**
  * Created by Administrator on 2016/8/16.
  */
-public class DetailFragment extends Fragment {
+public class DetailFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
     private int position=0;
+    private CursorRecyclerViewAdapter cursorRecyclerViewAdapter;
     private final String TAG = getClass().getSimpleName();
     private String address;
     private RecyclerView mRecyclerView;
     private MyAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
-    private  int count=0;
-    public static List<MovieSub> list_comment = new ArrayList<>();
-    public static List<MovieTrailer> list_trailer = new ArrayList<>();
-    public static List<Movie> list_movive=new ArrayList<>();
+    private String current_table=null;
+    private String current_movie_title;
+    private  int current_movie_position;
+    private static final String[] POPULAR_MOVIE_COLUMNS = {
+            MovieContact.PopularMovieEntry.TABLE_NAME + "." + MovieContact.PopularMovieEntry._ID,
+            MovieContact.PopularMovieEntry.COLUMN_TITLE,
+            MovieContact.PopularMovieEntry.COLUMN_RELEASE_DATE,
+            MovieContact.PopularMovieEntry.COLUMN_VOTE,
+            MovieContact.PopularMovieEntry.COLUMN_NUMBER,
+            MovieContact.PopularMovieEntry.COLUMN_OVERVIEW,
+            MovieContact.PopularMovieEntry.COLUMN_PATH,
+            MovieContact.PopularMovieEntry.COLUMN_COMMENT,
+            MovieContact.PopularMovieEntry.COLUMN_LENGTH,
+            MovieContact.PopularMovieEntry.COLUMN_TRAILER
 
+    };
+    private static final String[] TOP_MOVIE_COLUMNS = {
+            MovieContact.TopMovieEntry.TABLE_NAME + "." + MovieContact.TopMovieEntry._ID,
+            MovieContact.TopMovieEntry.COLUMN_TITLE,
+            MovieContact.TopMovieEntry.COLUMN_RELEASE_DATE,
+            MovieContact.TopMovieEntry.COLUMN_VOTE,
+            MovieContact.TopMovieEntry.COLUMN_NUMBER,
+            MovieContact.TopMovieEntry.COLUMN_OVERVIEW,
+            MovieContact.TopMovieEntry.COLUMN_PATH,
+            MovieContact.TopMovieEntry.COLUMN_COMMENT,
+            MovieContact.TopMovieEntry.COLUMN_LENGTH,
+            MovieContact.TopMovieEntry.COLUMN_TRAILER
+
+    };
+
+    private static final int TOP_MOVIE_LOADER = 20;
+    private static final int POPULAR_MOVIE_LOADER = 30;
+    static final int COL_MOVIE_ID = 0;
+    static final int COL_TITLE = 1;
+    static final int COL_RELEASE_DATE= 2;
+    static final int COL_VOTE = 3;
+    static final int COL_NUMBER = 4;
+    static final int COL_OVERVIEW= 5;
+    static final int COL_PATH = 6;
+    static final int COL_COMMENT = 7;
+    static final int COL_LENGTH = 8;
+    static final int COL_TRAILER = 9;
+
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+
+
+        LoaderManager loaderManager=getLoaderManager();
+        initLoader(POPULAR_MOVIE_LOADER,null,this,loaderManager);
+        initLoader(TOP_MOVIE_LOADER,null,this,loaderManager);
+        super.onActivityCreated(savedInstanceState);
+
+
+
+    }
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+            Intent intent=getActivity().getIntent();
+            current_table=intent.getStringExtra("table");
+            current_movie_title =intent.getStringExtra("title");
+            current_movie_position=intent.getIntExtra("position",-1);
+            Log.i("detail intent table",current_table);
+            Log.i("detail intent id", current_movie_title);
+            Log.i("detail intent position", String.valueOf(current_movie_position));
         Log.i("detailfragment","oncreate");
 
         }
+    public static <T> void initLoader(final int loaderId, final Bundle args, final LoaderManager.LoaderCallbacks<T> callbacks,
+                                      final LoaderManager loaderManager) {
+        final Loader<T> loader = loaderManager.getLoader(loaderId);
+        if (loader != null && loader.isReset()) {
+            Log.i("initloader","1");
 
+            loaderManager.restartLoader(loaderId, args, callbacks);
+        } else {
+            Log.i("initloader","2");
+            loaderManager.initLoader(loaderId, args, callbacks);
+        }
+    }
     public void onStart() {
         super.onStart();
         Log.i("detailfragment","onstart");
-        Intent intent = getActivity().getIntent();
-        if ((intent.getStringExtra("identity") != null) && intent.getStringExtra("identity").equals("ContentFragment"))
-        {     Log.i("detailfragment","oncreate1");
-            list_movive=ContentFragment.getList();
-            position = intent.getIntExtra("position", -1);
-            //根据点击位置，在Detail中取出相应数值，取出ContentFragment中list<Movie>中对应位置的电影id
-            String ID = ContentFragment.getList().get(position).getId();
-            GetCommentTask getCommentTask = new GetCommentTask();
-            getCommentTask.execute(ID);
-            GetTrailerTask getTrailerTask = new GetTrailerTask();
-            getTrailerTask.execute(ID);
-        }
-        if ((intent.getStringExtra("identity") != null) && intent.getStringExtra("identity").equals("CollectActivity")){
-            Log.i("detailfragment","oncreate2");
-            Log.i("detailfragment", String.valueOf(list_movive.size()));
-            Log.i("detailfragment",String.valueOf(list_comment.size()));
-            list_comment= CollectActivity.listsub;
-            list_movive=CollectActivity.list;
-            Log.i("detailfragment", String.valueOf(list_movive.size()));
-            Log.i("detailfragment",String.valueOf(list_comment.size()));
-            position=intent.getIntExtra("position",0);
-            MyAdapter myAdapter = new MyAdapter(getActivity(), list_movive, list_comment, position);
-            mRecyclerView.setAdapter(myAdapter);
-        }
-            //自定义的adapter会传入两个列表，分别是电影详细信息的对象列表和电影评论的对象列表；
-            //position是intent中储存的关于电影在gridview中的位置--对应电影在电影详细信息的对象列表中的位置
+
+
 
 
     }
 
 
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        Log.i("detailfragment","oncreatVIEW");
+        Log.i("detailfragment","oncreatView");
+        cursorRecyclerViewAdapter=new CursorRecyclerViewAdapter(getActivity(),null,0);
+
+        TrueCursorRecyclerViewAdapter trueCursorRecyclerViewAdapter=new TrueCursorRecyclerViewAdapter(cursorRecyclerViewAdapter,getActivity(),TrueCursorRecyclerViewAdapter.FRAGMENT_DETAIL, current_movie_position);
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.my_recycler_view);
         mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
+        mRecyclerView.setAdapter(trueCursorRecyclerViewAdapter);
         return rootView;
     }
 
-    public class GetCommentTask extends AsyncTask<String, Void, List<MovieSub>> {
-
-
-        @Override
-        protected List<MovieSub> doInBackground(String... params) {
-            if (params.length != 0) {
-                String id = params[0];
-                final String ADDRESS = "http://api.themoviedb.org/3/movie/" + id + "/reviews?api_key=6240369edd9386c3d88daa7510b4b921";
-                HttpURLConnection connection = null;
-                BufferedReader reader = null;
-                String dataOutput = null;
-//            Uri.Builder builder=Uri.Builder.
-                try {
-                    URL url = new URL(ADDRESS);
-                    connection = (HttpURLConnection) url.openConnection();
-                    connection.setRequestMethod("GET");
-                    connection.connect();
-                    InputStream inputStream = connection.getInputStream();
-                    StringBuffer stringBuffer = new StringBuffer();
-                    if (inputStream == null) {
-                    }
-                    reader = new BufferedReader(new InputStreamReader(inputStream));
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        stringBuffer.append(line + "\n");
-                    }
-                    if (stringBuffer.length() == 0) {
-                    }
-                    dataOutput = stringBuffer.toString();
-
-                    Log.i(TAG, dataOutput);
-                    JsonParser jsonParser = new JsonParser();
-                    JsonElement jelement = jsonParser.parse(dataOutput);
-                    JsonObject object = jelement.getAsJsonObject();
-                    JsonArray array = object.getAsJsonArray("results");
-                    for (int j = 0; j < array.size(); j++) {
-                        Gson gson = new Gson();
-//                     List<MovieSub> moviesList=gson.fromJson(array.get(j).getAsJsonObject(), new TypeToken<List<MovieSub>>(){}.getType());
-                        MovieSub moviesub = gson.fromJson(array.get(j).getAsJsonObject(), MovieSub.class);
-                        list_comment.add(moviesub);
-                    }
-
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    if (connection != null) {
-                        connection.disconnect();
-                    }
-
-                }
-            }
-            if (list_comment != null) {
-                return list_comment;
-            } else {
-                Log.i(TAG, "list_comment is null");
-                return null;
-
-            }
-        }
-
-        @Override
-        protected void onPostExecute(List<MovieSub> content) {
-            list_comment = content;
-            MyAdapter myAdapter = new MyAdapter(getActivity(), ContentFragment.getList(), list_comment, position);
-            mRecyclerView.setAdapter(myAdapter);
-        }
-    }
-
-    public class GetTrailerTask extends AsyncTask<String, Void, List<MovieTrailer>> {
-
-        @Override
-        protected List<MovieTrailer> doInBackground(String... strings) {
-            if (strings.length != 0) {
-                String id = strings[0];
-                final String ADDRESS = "http://api.themoviedb.org/3/movie/" + id + "/videos?api_key=6240369edd9386c3d88daa7510b4b921";
-                HttpURLConnection connection = null;
-                BufferedReader reader = null;
-                String dataOutput = null;
-                try {
-                    URL url = new URL(ADDRESS);
-                    connection = (HttpURLConnection) url.openConnection();
-                    connection.setRequestMethod("GET");
-                    connection.connect();
-                    InputStream inputStream = connection.getInputStream();
-                    StringBuffer stringBuffer = new StringBuffer();
-                    if (inputStream == null) {
-                    }
-                    reader = new BufferedReader(new InputStreamReader(inputStream));
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        stringBuffer.append(line + "\n");
-                    }
-                    if (stringBuffer.length() == 0) {
-                    }
-                    dataOutput = stringBuffer.toString();
-                    Log.i(TAG, dataOutput);
-                    JsonParser jsonParser = new JsonParser();
-                    JsonElement jelement = jsonParser.parse(dataOutput);
-                    JsonObject object = jelement.getAsJsonObject();
-                    JsonArray array = object.getAsJsonArray("results");
-                    for (int j = 0; j < array.size(); j++) {
-                        Gson gson = new Gson();
-//                     List<MovieSub> moviesList=gson.fromJson(array.get(j).getAsJsonObject(), new TypeToken<List<MovieSub>>(){}.getType());
-                        MovieTrailer movieTrailer = gson.fromJson(array.get(j).getAsJsonObject(), MovieTrailer.class);
-                        list_trailer.add(movieTrailer);
-                    }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    if (connection != null) {
-                        connection.disconnect();
-                    }
-
-                }
-            }
-            if (list_trailer != null) {
-                return list_trailer;
-            } else {
-                Log.i(TAG, "list_comment is null");
-                return null;
-
-            }
-
-        }
-    }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         Log.i("detailfragment","ondestroy");
-       if(!DetailActivity.IS_FROM_COLLECT_ACTIVITY) list_comment.clear();
-        list_trailer.clear();
+
     }
+    /*
+    先前写的回调方法，在平板布局中当左侧的数据加载完毕时再让右侧的Fragment开始加载
+     */
     public void LoadContentsFromList(){
         Log.i("detailfragment","loadfrom");
         Bundle argument = getArguments();
@@ -241,14 +161,67 @@ public class DetailFragment extends Fragment {
             if (!ContentFragment.getList().isEmpty()){
                 String id = ContentFragment.getList().get(position).getId();
                 Log.i("fragment", id);
-                Log.i("fragment", String.valueOf(list_movive.size()));
 
-                GetCommentTask getCommentTask = new GetCommentTask();
-                getCommentTask.execute(id);
-                GetTrailerTask getTrailerTask = new GetTrailerTask();
-                getTrailerTask.execute(id);
+
             }
         }
     }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+
+        switch (id) {
+
+
+            case POPULAR_MOVIE_LOADER:
+
+                Log.i("LOG_TAG", "In onCreatepopularLoader");
+                Loader<Cursor> loader1= new CursorLoader(
+                        getActivity(), MovieContact.PopularMovieEntry.CONTENT_URI,
+                        POPULAR_MOVIE_COLUMNS,
+                        null,
+                        null,
+                        null);
+                return loader1;
+
+            case TOP_MOVIE_LOADER:
+                Log.i("LOG_TAG", "In onCreatetopLoader");
+                Loader<Cursor> loader2= new CursorLoader(
+                        getActivity(), MovieContact.TopMovieEntry.CONTENT_URI,
+                        TOP_MOVIE_COLUMNS,
+                        null,
+                        null,
+                        null);
+                return loader2;
+
+
+        }
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        Log.i("in detailfragment", "onloadFinished is called");
+        if (loader.getId() == TOP_MOVIE_LOADER) {
+
+            if (TextUtils.equals(current_table, SP_TOP_MOVIE)) {
+                cursorRecyclerViewAdapter.swapCursor(data);
+                Log.i("in detailfragment", "loader id is " + String.valueOf(loader.getId()));
+            }
+        }
+        if (loader.getId() == POPULAR_MOVIE_LOADER) {
+            if (TextUtils.equals(current_table, SP_POPULAR_MOVIE)) {
+                cursorRecyclerViewAdapter.swapCursor(data);
+                Log.i("in detailfragment", "loader id is " + String.valueOf(loader.getId()));
+            }
+
+
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        Log.i("contentfragment", "loader is reset");
+        cursorRecyclerViewAdapter.swapCursor(null);    }
 }
 

@@ -59,7 +59,7 @@ public class CollectActivity extends AppCompatActivity {
     }
 
     private void fillList(){
-    Cursor cursor=getContentResolver().query(MovieContact.MovieEntry.CONTENT_URI,null,null,null,null);
+    Cursor cursor=getContentResolver().query(MovieContact.PopularMovieEntry.CONTENT_URI,null,null,null,null);
     Log.i("cursor", String.valueOf(cursor.getCount()));
     if(cursor!=null){
         int i =0;
