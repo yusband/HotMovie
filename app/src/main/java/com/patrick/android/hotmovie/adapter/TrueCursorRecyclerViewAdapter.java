@@ -83,7 +83,7 @@ public class TrueCursorRecyclerViewAdapter extends RecyclerView.Adapter<Recycler
             cursorRecyclerViewAdapter.bindView(holder.itemView, mContext, cursorRecyclerViewAdapter.getCursor(), TYPE_COMMON);
         }
         if (type == FRAGMENT_DETAIL) {
-            while (cursorRecyclerViewAdapter.getCursor() != null) {
+
                 cursorRecyclerViewAdapter.getCursor().moveToPosition(movie_position);
                 Log.i("contentfragment", "movie position is " + movie_position);
                 switch (position) {
@@ -96,11 +96,11 @@ public class TrueCursorRecyclerViewAdapter extends RecyclerView.Adapter<Recycler
                         cursorRecyclerViewAdapter.bindView(holder.itemView, mContext, cursorRecyclerViewAdapter.getCursor(), TYPE_TRAILER);
                         break;
                     default:
-//                    Log.i("bindviewholder ", String.valueOf(position));
+
                         cursorRecyclerViewAdapter.bindView(holder.itemView, mContext, cursorRecyclerViewAdapter.getCursor(), TYPE_COMMENT);
                         break;
                 }
-            }
+
 
         }
     }
