@@ -15,22 +15,25 @@ import android.util.Log;
 public class MovieProvider extends ContentProvider {
     private static final UriMatcher sUriMatcher = buildUriMatcher();
     public static final int MOVIE_POPULAR =100 ;
+    public static final int MOVIE_POPULAR_CERTAIN = 101;
+    public static final int MOVIE_TOP = 200;
+    public static final int MOVIE_TOP_CERTAIN = 201;
+    public static final int MOVIE_FAVOR = 300;
+    public static final int MOVIE_FAVOR_CERTAIN = 301;
 
-    public static final int MOVIE_TOP =200 ;
-    public static final int MOVIE_FAVOR =300 ;
-    public static final int MOVIE_POPULAR_CERTAIN =400 ;
-    public static final int MOVIE_TOP_CERTAIN =500 ;
-    public static final int MOVIE_FAVOR_CERTAIN =600 ;
+
     private OpenHelper mOpenHelper;
+
     public static UriMatcher buildUriMatcher() {
 
-        UriMatcher matcher=new UriMatcher(UriMatcher.NO_MATCH);
-        final String authority=MovieContact.CONTENT_AUTHORITY;
-        matcher.addURI(authority,MovieContact.PATH_POPULAR_MOVIE, MOVIE_POPULAR);
-        matcher.addURI(authority,MovieContact.PATH_TOP_MOVIE, MOVIE_TOP);
-        matcher.addURI(authority,MovieContact.PATH_POPULAR_MOVIE+MovieContact.PopularMovieEntry.TABLE_NAME+"/*", MOVIE_POPULAR_CERTAIN);
-        matcher.addURI(authority,MovieContact.PATH_TOP_MOVIE+MovieContact.TopMovieEntry.TABLE_NAME+"/*", MOVIE_TOP_CERTAIN);
-
+        UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
+        final String authority = MovieContact.CONTENT_AUTHORITY;
+        matcher.addURI(authority, MovieContact.PATH_POPULAR_MOVIE, MOVIE_POPULAR);
+        matcher.addURI(authority, MovieContact.PATH_POPULAR_MOVIE +"/#", MOVIE_POPULAR_CERTAIN);
+        matcher.addURI(authority, MovieContact.PATH_TOP_MOVIE, MOVIE_TOP);
+        matcher.addURI(authority, MovieContact.PATH_TOP_MOVIE +"/#", MOVIE_TOP_CERTAIN);
+        matcher.addURI(authority, MovieContact.PATH_FAVOR_MOVIE, MOVIE_FAVOR);
+        matcher.addURI(authority, MovieContact.PATH_FAVOR_MOVIE +"/#", MOVIE_FAVOR_CERTAIN);
 
 
         // 3) Return the new matcher!
@@ -53,12 +56,25 @@ public class MovieProvider extends ContentProvider {
                 cursor=db.query("popular_movie",strings,s,strings1,null,null,s1);
                  break;
                 }
+            case MOVIE_POPULAR_CERTAIN: {
+                cursor=db.query("popular_movie",strings,s,strings1,null,null,s1);
+                break;
+            }
             case MOVIE_TOP:
             {
                 cursor=db.query("top_movie",strings,s,strings1,null,null,s1);
                 break;
             }
+            case MOVIE_TOP_CERTAIN:
+            {
+                cursor=db.query("top_movie",strings,s,strings1,null,null,s1);
+                break;
+            }
             case MOVIE_FAVOR: {
+                cursor=db.query("favor_movie",strings,s,strings1,null,null,s1);
+                break;
+            }
+            case MOVIE_FAVOR_CERTAIN: {
                 cursor=db.query("favor_movie",strings,s,strings1,null,null,s1);
                 break;
             }
@@ -148,7 +164,32 @@ public class MovieProvider extends ContentProvider {
 
                deleteRows=db.delete(MovieContact.FavorMovieEntry.TABLE_NAME,s,strings);
                 if ( deleteRows<= 0 )
-                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                    throw new android.database.SQLException("Failed to delete row " + uri);
+                break;
+            }
+            case  MOVIE_FAVOR: {
+
+                deleteRows=db.delete(MovieContact.FavorMovieEntry.TABLE_NAME,s,strings);
+                Log.i("provider", String.valueOf(deleteRows));
+                if ( deleteRows<= 0 )
+                    throw new android.database.SQLException("Failed to delete row " + uri);
+                break;
+            }
+
+            case MOVIE_POPULAR:{
+
+                deleteRows=db.delete(MovieContact.PopularMovieEntry.TABLE_NAME,"1",strings);
+                Log.i("provider", String.valueOf(deleteRows));
+                if ( deleteRows<= 0 )
+                    throw new android.database.SQLException("Failed to delete table popular" + uri);
+                break;
+            }
+            case MOVIE_TOP:{
+
+                deleteRows=db.delete(MovieContact.TopMovieEntry.TABLE_NAME,"1",strings);
+                Log.i("provider", String.valueOf(deleteRows));
+                if ( deleteRows<= 0 )
+                    throw new android.database.SQLException("Failed to delete table top" + uri);
                 break;
             }
 

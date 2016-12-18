@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:orientation="horizontal" android:layout_width="match_parent"
     android:layout_height="120dp"
     android:background="#d9d7d6"
     android:id="@+id/test_cursor_view">
@@ -20,5 +20,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/test_cursor_view_date"/>
+        <RatingBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/myRatingBar"
+
+
+            android:id="@+id/test_cursor_view_rate" />
     </LinearLayout>
 </LinearLayout>

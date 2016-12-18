@@ -6,7 +6,9 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.ImageView;
@@ -18,10 +20,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.patrick.android.hotmovie.BuildConfig;
+import com.patrick.android.hotmovie.adapter.DetailAdapter;
 import com.patrick.android.hotmovie.db.MovieContact;
 import com.patrick.android.hotmovie.module.Movie;
 import com.patrick.android.hotmovie.module.MovieSub;
 import com.patrick.android.hotmovie.module.MovieTrailer;
+import com.patrick.android.hotmovie.ui.DetailFragment;
+import com.patrick.android.hotmovie.ui.MainActivity;
 import com.squareup.picasso.Picasso;
 
 import java.io.BufferedReader;
@@ -39,13 +44,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
-import static android.content.ContentValues.TAG;
+import static android.util.Log.i;
 
 public class FetchDataService extends IntentService{
-    public static final String ORDER_TAG_ONE="top_rated";
-    public static final String ORDER_TAG_TWO="popular";
+    public static final String ORDER_TOP ="top_rated";
+    public static final String ORDER_POPULAR ="popular";
+    private  final String  TAG=getClass().getSimpleName();
     List<String> popular_movies_id_list=new ArrayList<>();
     List<String> top_rated_movie_id_list=new ArrayList<>();
+    private Intent mIntent=null;
     public static String strSeparator = "__,__";
     /**
      * Creates an IntentService.  Invoked by your subclass's constructor.
@@ -60,10 +67,62 @@ public class FetchDataService extends IntentService{
     }
     @Override
     protected void onHandleIntent(Intent intent) {
-    if(intent!=null){
+        mIntent=intent;
+        String order = mIntent.getStringExtra(MainActivity.INTENT_RENEW);
+        String action=mIntent.getStringExtra(DetailAdapter.KEY);
+
+        i(TAG, order+"");
+        if(action==null) {
+
+            if (order != null) {
+                Log.i(TAG,"renew");
+                renewData(order);
+            }
+            if (order == null) {
+                Log.i(TAG,"init");
+                initData();
+            }
+        }
+        else {
+            Log.i(TAG,"favour");
+            favorData(action);
+        }
+
+
     }
-        fetchTwentyMovies(ORDER_TAG_ONE);
-        fetchTwentyMovies(ORDER_TAG_TWO);
+
+    private void favorData(String action) {
+        Log.i(TAG, "action is"+action);
+        if (TextUtils.equals(action, DetailAdapter.ACTION_INSERT)) {
+            Bundle bundle = mIntent.getBundleExtra("data");
+            if (bundle != null) {
+                ContentValues movieValues = new ContentValues();
+
+                movieValues.put(MovieContact.FavorMovieEntry.COLUMN_TITLE, bundle.getString(String.valueOf(DetailFragment.COL_TITLE), ""));
+                movieValues.put(MovieContact.FavorMovieEntry.COLUMN_RELEASE_DATE, bundle.getString(String.valueOf(DetailFragment.COL_RELEASE_DATE), ""));
+                movieValues.put(MovieContact.FavorMovieEntry.COLUMN_VOTE, bundle.getString(String.valueOf(DetailFragment.COL_VOTE), ""));
+                movieValues.put(MovieContact.FavorMovieEntry.COLUMN_NUMBER, bundle.getString(String.valueOf(DetailFragment.COL_NUMBER), ""));
+                movieValues.put(MovieContact.FavorMovieEntry.COLUMN_OVERVIEW, bundle.getString(String.valueOf(DetailFragment.COL_OVERVIEW), ""));
+                movieValues.put(MovieContact.FavorMovieEntry.COLUMN_LENGTH, bundle.getString(String.valueOf(DetailFragment.COL_LENGTH), ""));
+                movieValues.put(MovieContact.FavorMovieEntry.COLUMN_TRAILER, bundle.getString(String.valueOf(DetailFragment.COL_TRAILER), ""));
+                movieValues.put(MovieContact.FavorMovieEntry.COLUMN_COMMENT, bundle.getString(String.valueOf(DetailFragment.COL_COMMENT), ""));
+                movieValues.put(MovieContact.FavorMovieEntry.COLUMN_PATH, bundle.getString(String.valueOf(DetailFragment.COL_PATH), ""));
+                getContentResolver().insert(MovieContact.FavorMovieEntry.CONTENT_URI, movieValues);
+                Log.i(TAG, "favour inserted !");
+            } else i(TAG, "bundle is null!");
+        }
+        if (TextUtils.equals(action, DetailAdapter.ACTION_DELETE)) {
+            Log.i(TAG, "favour deleted !");
+                String title=mIntent.getStringExtra("name");
+                getContentResolver().delete(MovieContact.FavorMovieEntry.CONTENT_URI,"title=?",new String[]{title });
+                 Log.i(TAG, "favour deleted !");
+        }
+    }
+
+
+    public void initData(){
+        fetchTwentyMovies(ORDER_TOP);
+        fetchTwentyMovies(ORDER_POPULAR);
         if((top_rated_movie_id_list !=null)&&(top_rated_movie_id_list.size()!=0))
         {
             fetchTrailerData(top_rated_movie_id_list,MovieContact.TopMovieEntry.CONTENT_URI);
@@ -77,7 +136,53 @@ public class FetchDataService extends IntentService{
             fetchLength(popular_movies_id_list,MovieContact.PopularMovieEntry.CONTENT_URI);
         }
     }
+    public void  renewData(String order){
+        if (TextUtils.equals(order, ORDER_POPULAR)) {
+            deleteTwentyMovies(order);
+            fetchTwentyMovies(ORDER_POPULAR);
+            if((popular_movies_id_list !=null)&&(popular_movies_id_list.size()!=0))
+            {
+                fetchTrailerData(popular_movies_id_list,MovieContact.PopularMovieEntry.CONTENT_URI);
+                fetchCommentData(popular_movies_id_list,MovieContact.PopularMovieEntry.CONTENT_URI);
+                fetchLength(popular_movies_id_list,MovieContact.PopularMovieEntry.CONTENT_URI);
+            }
+            String status="done";
+            Intent localIntent =
+                    new Intent(Constants.BROADCAST_ACTION)
+                            // Puts the status into the Intent
+                            .putExtra(Constants.EXTENDED_DATA_STATUS, status);
+            // Broadcasts the Intent to receivers in this app.
+            LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+        }
+        if (TextUtils.equals(order, ORDER_TOP)) {
+            deleteTwentyMovies(order);
+            fetchTwentyMovies(ORDER_TOP);
+            if((top_rated_movie_id_list !=null)&&(top_rated_movie_id_list.size()!=0))
+            {
+                fetchTrailerData(top_rated_movie_id_list,MovieContact.TopMovieEntry.CONTENT_URI);
+                fetchCommentData(top_rated_movie_id_list,MovieContact.TopMovieEntry.CONTENT_URI);
+                fetchLength(top_rated_movie_id_list,MovieContact.TopMovieEntry.CONTENT_URI);
+            }
+            String status="done";
+            Intent localIntent =
+                    new Intent(Constants.BROADCAST_ACTION)
+                            // Puts the status into the Intent
+                            .putExtra(Constants.EXTENDED_DATA_STATUS, status);
+            // Broadcasts the Intent to receivers in this app.
+            LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+        }
+    }
+public void deleteTwentyMovies(String table){
+    if(TextUtils.equals(table,ORDER_POPULAR)){
+        getContentResolver().delete(MovieContact.PopularMovieEntry.CONTENT_URI,null,null);
 
+    }
+    if (TextUtils.equals(table, ORDER_TOP)) {
+        getContentResolver().delete(MovieContact.TopMovieEntry.CONTENT_URI,null,null);
+
+
+    }
+}
     public void fetchTwentyMovies(String order){
 //                                 http://api.themoviedb.org/3/movie/<movie_id>+ "?api_key=" + BuildConfig.MY_API_KEY;
 //        final String ADDRESS = "http://api.themoviedb.org/3/movie/" + id + "/videos?api_key="+BuildConfig.MY_API_KEY;
@@ -105,7 +210,7 @@ public class FetchDataService extends IntentService{
                 }
                 dataOutput = stringBuffer.toString();
 
-                Log.i(TAG, dataOutput);
+                i(TAG, dataOutput);
                 JsonParser jsonParser = new JsonParser();
                 JsonElement jelement = jsonParser.parse(dataOutput);
                 JsonObject object = jelement.getAsJsonObject();
@@ -183,7 +288,7 @@ public class FetchDataService extends IntentService{
             if (stringBuffer.length() == 0) {
             }
             dataOutput = stringBuffer.toString();
-            Log.i(TAG, dataOutput);
+            i(TAG, dataOutput);
             JsonParser jsonParser = new JsonParser();
             JsonElement jelement = jsonParser.parse(dataOutput);
             JsonObject object = jelement.getAsJsonObject();
@@ -230,7 +335,7 @@ public class FetchDataService extends IntentService{
                 }
                 dataOutput = stringBuffer.toString();
 
-                Log.i(TAG, dataOutput);
+                i(TAG, dataOutput);
                 JsonParser jsonParser = new JsonParser();
                 JsonElement jelement = jsonParser.parse(dataOutput);
                 JsonObject object = jelement.getAsJsonObject();
@@ -245,7 +350,7 @@ public class FetchDataService extends IntentService{
                 ContentValues contentValues = new ContentValues();
                 contentValues.put("comment", String.valueOf(comments));
                 int id_return = (getContentResolver().update(uri, contentValues, "number=?", new String[]{id}));
-                Log.i("service_comment", String.valueOf(id_return));
+                i("service_comment", String.valueOf(id_return));
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -282,19 +387,19 @@ public class FetchDataService extends IntentService{
               }
               dataOutput = stringBuffer.toString();
 
-              Log.i(TAG, dataOutput);
+              i(TAG, dataOutput);
               JsonParser jsonParser = new JsonParser();
               JsonElement jelement = jsonParser.parse(dataOutput);
               JsonObject object = jelement.getAsJsonObject();
 String length=object.get("runtime").toString();
 //              JsonPrimitive primitive = object.getAsJsonPrimitive("runtime");
 //              String length = String.valueOf(primitive.getAsCharacter());
-              Log.i("intentservice ", "length= " + length);
+              i("intentservice ", "length= " + length);
               ContentValues contentValues = new ContentValues();
               contentValues.put("length", length);
-              Log.i("service_length", id);
+              i("service_length", id);
               int id_return = (getContentResolver().update(uri, contentValues, "number=?", new String[]{id}));
-              Log.i("service_length", String.valueOf(id_return));
+              i("service_length", String.valueOf(id_return));
           } catch (ProtocolException e) {
               e.printStackTrace();
           } catch (MalformedURLException e) {
@@ -313,7 +418,7 @@ public void saveImage(String address,String identifier){
     Bitmap bitmap = drawable.getBitmap();
     File sdCardDirectory = Environment.getExternalStorageDirectory();
     File image = new File(sdCardDirectory,identifier+".png");
-    Log.i("路径",image.getPath());
+    i("路径",image.getPath());
     boolean success = false;
     // Encode the file as a PNG image.
     FileOutputStream outStream;
@@ -337,6 +442,17 @@ public void saveImage(String address,String identifier){
                 "Error during image saving", Toast.LENGTH_LONG).show();
     }
 }
+    public final class Constants {
+
+        // Defines a custom Intent action
+        public static final String BROADCAST_ACTION =
+                "com.patrick.android.hotmovie.net.BROADCAST";
+
+        // Defines the key for the status "extra" in an Intent
+        public static final String EXTENDED_DATA_STATUS =
+                "com.patrick.android.hotmovie.net.STATUS";
+
+    }
         }
 
 

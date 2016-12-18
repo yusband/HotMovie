@@ -32,19 +32,6 @@ public class CollectActivity extends AppCompatActivity {
         mRecyclerView = (RecyclerView )findViewById(R.id.collect_recycler_view);
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
-
-//        File imgFile = new  File("/storage/emulated/0/Ghostbusters.png");
-//
-//        if(imgFile.exists()){
-//            Log.i("imageview","loaded");
-//
-//            Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-//
-//            ImageView myImage = (ImageView) findViewById(R.id.imageviewTest);
-//
-//            myImage.setImageBitmap(myBitmap);
-//
-//        }
         fillList();
         CollectAdapter adapter=new CollectAdapter(this,list);
         mRecyclerView.setAdapter(adapter);

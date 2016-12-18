@@ -2,6 +2,7 @@
     <string name="app_name">HotMovie</string>
     <string name="sort_order">排列顺序</string>
     <string name="preference_file_key">sort_order</string>
+    <string name="autonew">刷新</string>
     <string-array name="sortBy">
         <item>Popularity</item>
         <item>Rate</item>
@@ -12,4 +13,7 @@
     </string-array>
     <string name="sortByWhat_popular">popular</string>
     <string name="sortByWhat_rate">top_rated</string>
+    <string name="chooser_title">watch the video via</string>
+    <string name="favoured">已收藏</string>
+    <string name="not_favoured">点击收藏</string>
 </resources>

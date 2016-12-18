@@ -38,7 +38,7 @@ public class DetailActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Log.i("detailfragment","activitySTARTed");
+
     }
 
     @Override
